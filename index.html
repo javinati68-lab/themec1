@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mr. Rocha’s English Class: Theme</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            blue: '#3b82f6',
+                            dark: '#1e293b',
+                            light: '#f8fafc'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .shiny-blue-border {
+            border: 2px solid #3b82f6;
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.8), inset 0 0 4px rgba(59, 130, 246, 0.4);
+            border-radius: 0.375rem;
+            outline: none;
+            transition: box-shadow 0.2s;
+        }
+        .shiny-blue-border:focus {
+            box-shadow: 0 0 12px rgba(59, 130, 246, 1), inset 0 0 6px rgba(59, 130, 246, 0.6);
+        }
+        
+        /* Puzzle Grid Styles */
+        .puzzle-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 2px;
+            width: 100%;
+            max-width: 600px;
+            aspect-ratio: 5/4;
+            margin: 0 auto;
+            background-color: #333;
+            border: 2px solid #3b82f6;
+        }
+        .puzzle-piece {
+            width: 100%;
+            height: 100%;
+            background-image: url('Image2.jpg'); /* Fallback handled in JS */
+            background-size: 500% 400%;
+            cursor: grab;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .puzzle-piece:active { cursor: grabbing; }
+        
+        .word-draggable {
+            cursor: pointer;
+            user-select: none;
+            touch-action: manipulation;
+        }
+        
+        .correct-bg { background-color: rgba(34, 197, 94, 0.2) !important; border-color: #22c55e !important; }
+        .incorrect-bg { background-color: rgba(239, 68, 68, 0.2) !important; border-color: #ef4444 !important; }
+        
+        @media print {
+            body { margin: 0; padding: 0; }
+            .no-print, button, .dark-mode-toggle, #nav-controls { display: none !important; }
+            .section-container { display: block !important; page-break-inside: avoid; margin-bottom: 20px; }
+            #results-section { display: block !important; }
+            .shiny-blue-border { box-shadow: none; border: 1px solid #000; }
+        }
+    </style>
+</head>
+<body class="bg-brand-light text-gray-900 dark:bg-brand-dark dark:text-gray-100 font-sans min-h-screen flex flex-col items-center p-4">
+
+    <header class="w-full max-w-5xl bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 mt-4 relative">
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-2xl md:text-4xl font-bold text-brand-blue">Mr. Rocha’s English Class: Theme</h1>
+            <button id="theme-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                <svg id="moon-icon" class="w-6 h-6 hidden dark:block text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+                <svg id="sun-icon" class="w-6 h-6 block dark:hidden text-orange-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4.22 2.32a1 1 0 011.415 0l.707.707a1 1 0 01-1.414 1.414l-.708-.707a1 1 0 010-1.414zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zm-2.32 4.22a1 1 0 010 1.415l-.707.707a1 1 0 11-1.414-1.414l.707-.708a1 1 0 011.414 0zM10 16a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm-4.22-2.32a1 1 0 01-1.415 0l-.707-.707a1 1 0 011.414-1.414l.708.707a1 1 0 010 1.414zM2 10a1 1 0 011-1h1a1 1 0 110 2H3a1 1 0 01-1-1zm2.32-4.22a1 1 0 010-1.415l.707-.707a1 1 0 011.414 1.414l-.707.708a1 1 0 01-1.414 0zM10 5a5 5 0 100 10 5 5 0 000-10z"></path></svg>
+            </button>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label for="student-name" class="block font-semibold mb-1">Name:</label>
+                <input type="text" id="student-name" class="shiny-blue-border w-full p-2 bg-transparent text-inherit" placeholder="Enter your full name">
+            </div>
+            <div>
+                <label for="student-date" class="block font-semibold mb-1">Date:</label>
+                <input type="date" id="student-date" class="shiny-blue-border w-full p-2 bg-transparent text-inherit">
+            </div>
+        </div>
+
+        <div class="w-full bg-gray-200 rounded-full h-4 dark:bg-gray-700">
+            <div id="progress-bar" class="bg-brand-blue h-4 rounded-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+        <p class="text-right text-sm mt-1 text-gray-500"><span id="progress-text">0</span>% Completed</p>
+    </header>
+
+    <main class="w-full max-w-5xl flex-grow bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
+        
+        <!-- Intro Section -->
+        <section id="section-intro" class="section-container active-section block">
+            <h2 class="text-2xl font-bold mb-4 border-b pb-2">Introduction</h2>
+            <div class="flex justify-center mb-4 bg-gray-100 dark:bg-gray-900 rounded p-4">
+                <img src="Image1.jpg" alt="Theme Introduction" onerror="this.src='https://placehold.co/800x400/1e293b/ffffff?text=Image+1+(Intro)';" class="max-w-full h-auto rounded shadow-md object-contain max-h-96">
+            </div>
+            <p class="text-lg leading-relaxed">Welcome to our module on <strong>Theme in Literature</strong>. Throughout these activities, you will analyze, unscramble, and evaluate texts to deepen your understanding of central messages in storytelling.</p>
+        </section>
+
+        <section id="section-act1" class="section-container hidden">
+            <h2 class="text-2xl font-bold mb-4 border-b pb-2">Activity 1: Video Analysis</h2>
+            <p class="mb-4">Watch the video. Take notes and tell Mr. Rocha what the video was about.</p>
+            <div class="flex justify-center mb-6">
+                <video src="Video1.mp4" controls class="max-w-full rounded shadow-md border border-gray-300 dark:border-gray-600 bg-black max-h-96 w-full" 
+                       poster="https://placehold.co/800x450/000000/ffffff?text=Video+1+Placeholder">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+            <label class="block font-semibold mb-2">Your Notes & Summary:</label>
+            <textarea id="act1-answer" rows="5" class="shiny-blue-border w-full p-3 bg-transparent text-inherit resize-y" placeholder="Type your summary here..."></textarea>
+            <button class="mt-4 bg-brand-blue text-white px-6 py-2 rounded hover:bg-blue-600 transition check-ans-btn" onclick="checkAct1()">Check Answer</button>
+            <div id="act1-feedback" class="mt-3 font-semibold"></div>
+        </section>
+
+        <section id="section-act2" class="section-container hidden">
+            <h2 class="text-2xl font-bold mb-4 border-b pb-2">Activity 2: Scrambled Image</h2>
+            <p class="mb-2">Reorder the 20 parts of the image to form the complete picture. Drag and drop to swap pieces.</p>
+            
+            <div class="flex flex-col md:flex-row gap-6 mb-4">
+                <div class="flex-grow flex flex-col items-center w-full md:w-3/4">
+                    <div class="flex justify-between w-full max-w-[600px] mb-2">
+                        <span class="font-bold text-xl">Timer: <span id="puzzle-timer">00:00</span></span>
+                        <button onclick="initPuzzle()" class="bg-gray-500 text-white px-4 py-1 rounded hover:bg-gray-600">Do Again</button>
+                    </div>
+                    <!-- The Grid -->
+                    <div id="puzzle-board" class="puzzle-grid"></div>
+                </div>
+                
+                <div class="w-full md:w-1/4 flex flex-col items-center justify-start">
+                    <p class="font-semibold mb-2">Target Image (80% size):</p>
+                    <img src="Image2.jpg" onerror="this.src='https://placehold.co/500x400/3b82f6/ffffff?text=Target+Image+2';" class="w-4/5 h-auto rounded border-2 border-dashed border-gray-400 opacity-80 pointer-events-none" alt="Target">
+                </div>
+            </div>
+            <button class="mt-4 bg-brand-blue text-white px-6 py-2 rounded hover:bg-blue-600 transition check-ans-btn" onclick="checkAct2()">Check Answer</button>
+            <div id="act2-feedback" class="mt-3 font-semibold"></div>
+        </section>
+
+        <section id="section-act3" class="section-container hidden">
+            <h2 class="text-2xl font-bold mb-4 border-b pb-2">Activity 3: Dialogue on Theme</h2>
+            <p class="mb-4">Select Person B's correct response from the dropdowns to complete the C1-level conversation about literary themes. Used options will be removed from other dropdowns.</p>
+            <div id="act3-container" class="space-y-4 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                <!-- Dynamically populated by JS -->
+            </div>
+            <button class="mt-6 bg-brand-blue text-white px-6 py-2 rounded hover:bg-blue-600 transition check-ans-btn" onclick="checkAct3()">Check Answers</button>
+            <div id="act3-feedback" class="mt-3 font-semibold"></div>
+        </section>
+
+        <section id="section-act4" class="section-container hidden">
+            <h2 class="text-2xl font-bold mb-4 border-b pb-2">Activity 4: Story Interpretation</h2>
+            <div class="w-full mb-6 bg-gray-100 dark:bg-gray-900 rounded-lg shadow-lg overflow-hidden flex justify-center">
+                <img src="Image3.jpg" onerror="this.src='https://placehold.co/1200x600/10b981/ffffff?text=Image+3+(Story)';" class="w-full h-auto block">
+            </div>
+            <label class="block font-semibold mb-2">Tell Mr. Rocha what this story is about:</label>
+            <textarea id="act4-answer" rows="5" class="shiny-blue-border w-full p-3 bg-transparent text-inherit resize-y mb-4" placeholder="Type your narrative interpretation here..."></textarea>
+            
+            <label class="block font-semibold mb-2">Grade your interpretation on a scale from 1 to 10:</label>
+            <input type="number" id="act4-grade" min="1" max="10" class="shiny-blue-border w-24 p-2 bg-transparent text-inherit text-center">
+            <br>
+            <button class="mt-4 bg-brand-blue text-white px-6 py-2 rounded hover:bg-blue-600 transition check-ans-btn" onclick="checkAct4()">Check Answer</button>
+            <div id="act4-feedback" class="mt-3 font-semibold"></div>
+        </section>
+
+        <section id="section-act5" class="section-container hidden">
+            <h2 class="text-2xl font-bold mb-4 border-b pb-2">Activity 5: Reading Comprehension</h2>
+            <div class="bg-gray-100 dark:bg-gray-700 p-6 rounded-lg mb-6 shadow-inner text-justify leading-relaxed">
+                <h3 class="font-bold text-xl mb-3">The Architectural Framework of Theme</h3>
+                <p class="mb-3">In literary analysis, the concept of 'theme' extends far beyond a simplistic moral or a reductive summary of events. Rather, theme functions as the intricate skeletal structure of a narrative—an underlying philosophical assertion that governs character development, orchestrates plot progression, and unifies disparate motifs into a cohesive thematic tapestry. While novice readers frequently conflate subject matter with theme, a sophisticated examination reveals that the subject is merely the vehicle, whereas the theme is the philosophical destination.</p>
+                <p class="mb-3">Consider, for instance, a novel concerning a devastating war. The subject is undeniably warfare and its explicit brutalities. However, the theme might interrogate the corrosive nature of unchecked authority, the resilience of human camaraderie in the face of existential despair, or the profound psychological fragmentation experienced by combatants. A masterful author rarely states these themes explicitly. Instead, they are woven into the subtext, demanding active cognitive engagement from the reader to decode symbols, analyze character foils, and synthesize recurring ideological conflicts.</p>
+                <p class="mb-3">Furthermore, literary themes are inherently polyphonic, meaning a robust narrative rarely espouses a singular, monolithic viewpoint. Instead, it presents competing thematic propositions, allowing ambiguity to foster deeper intellectual discourse. The protagonist’s journey often serves as the primary conduit for thematic exploration, as their internal moral calculus and subsequent choices reflect the author’s broader inquiries into the human condition.</p>
+                <p>Consequently, identifying a theme requires an inductive analytical approach. The reader must accumulate textual evidence—ranging from syntactic nuances to overarching narrative arcs—and construct a generalized claim about reality or human nature that transcends the specific constraints of the fiction. Ultimately, the profound enduring power of canonical literature resides not merely in the elegance of its prose, but in its relentless pursuit of thematic truths that resonate across varied historical epochs and cultural paradigms.</p>
+            </div>
+            
+            <div id="act5-mcqs" class="space-y-6">
+                <!-- Dynamically populated by JS -->
+            </div>
+            <button class="mt-6 bg-brand-blue text-white px-6 py-2 rounded hover:bg-blue-600 transition check-ans-btn" onclick="checkAct5()">Check Answers</button>
+            <div id="act5-feedback" class="mt-3 font-semibold"></div>
+        </section>
+
+        <section id="section-act6" class="section-container hidden">
+            <h2 class="text-2xl font-bold mb-4 border-b pb-2">Activity 6: Syntactic Reconstruction</h2>
+            <p class="mb-4">Reconstruct the 12 C2-level complex and compound sentences by clicking the words in the correct order. Use the Speaker button to hear the correct sentence.</p>
+            <div id="act6-container" class="space-y-8">
+                <!-- Dynamically populated by JS -->
+            </div>
+            <button class="mt-6 bg-brand-blue text-white px-6 py-2 rounded hover:bg-blue-600 transition check-ans-btn" onclick="checkAct6()">Check Answers</button>
+            <div id="act6-feedback" class="mt-3 font-semibold"></div>
+        </section>
+
+        <section id="section-act7" class="section-container hidden">
+            <h2 class="text-2xl font-bold mb-4 border-b pb-2">Activity 7: The Last Signal</h2>
+            <div class="flex flex-col md:flex-row gap-6 mb-6">
+                <div class="md:w-1/2 flex flex-col justify-center bg-gray-100 dark:bg-gray-900 rounded p-4 shadow-md">
+                     <img src="Image4.jpg" onerror="this.src='https://placehold.co/600x400/8b5cf6/ffffff?text=Image+4+(The+Last+Signal)';" class="max-w-full h-auto rounded mb-4 max-h-64 object-cover">
+                     <audio src="Audio1.mp3" controls class="w-full">Your browser does not support audio.</audio>
+                </div>
+                <div class="md:w-1/2">
+                    <p class="mb-2 italic">Listen to the audio and fill in the missing words (every 20th word is omitted).</p>
+                    <div id="act7-text" class="leading-loose text-justify bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-inner">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="text-xl font-bold mt-8 mb-4 border-b pb-1">Comprehension Questions</h3>
+            <div id="act7-mcqs" class="space-y-6">
+                <!-- Populated by JS -->
+            </div>
+
+            <button class="mt-6 bg-brand-blue text-white px-6 py-2 rounded hover:bg-blue-600 transition check-ans-btn" onclick="checkAct7()">Check Answers</button>
+            <div id="act7-feedback" class="mt-3 font-semibold"></div>
+        </section>
+
+        <section id="section-results" class="section-container hidden">
+            <h2 class="text-3xl font-bold mb-6 border-b pb-2 text-brand-blue">Overall Results</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded shadow">
+                    <h3 class="text-xl font-bold text-center mb-2">Performance by Activity</h3>
+                    <canvas id="barChart"></canvas>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded shadow flex flex-col justify-center items-center">
+                    <h3 class="text-xl font-bold text-center mb-2">Overall Score Overview</h3>
+                    <div class="w-3/4 max-w-[300px]">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-brand-blue text-white p-6 rounded-lg shadow-lg mb-8">
+                <h3 class="text-2xl font-bold mb-2">Final Score: <span id="final-score-display">0</span>%</h3>
+                <p id="final-feedback-general" class="text-lg"></p>
+            </div>
+
+            <h3 class="text-2xl font-bold mb-4">8 Specific Recommendations for You:</h3>
+            <ul id="recommendations-list" class="list-disc pl-6 space-y-2 text-lg">
+                <!-- JS populated -->
+            </ul>
+
+            <button onclick="window.print()" class="mt-8 bg-green-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-700 transition shadow-lg text-lg flex items-center gap-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                Print Results
+            </button>
+        </section>
+
+    </main>
+
+    <div id="nav-controls" class="w-full max-w-5xl flex justify-between bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg sticky bottom-4 z-10">
+        <button id="btn-prev" onclick="nav(-1)" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition disabled:opacity-50">Previous</button>
+        <button id="btn-results" onclick="showResultsEarly()" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition font-bold">See Results</button>
+        <button id="btn-next" onclick="nav(1)" class="bg-brand-blue text-white px-4 py-2 rounded hover:bg-blue-600 transition disabled:opacity-50">Next</button>
+        <button id="btn-submit" onclick="submitAll()" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition font-bold hidden">Submit</button>
+    </div>
+
+    <script>
+        // State
+        const sections = ['intro', 'act1', 'act2', 'act3', 'act4', 'act5', 'act6', 'act7', 'results'];
+        let currentIndex = 0;
+        let scores = { act1: 0, act2: 0, act3: 0, act4: 0, act5: 0, act6: 0, act7: 0 };
+        let actCompleted = { act1: false, act2: false, act3: false, act4: false, act5: false, act6: false, act7: false };
+
+        // DOM Elements
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        
+        // Dark Mode Logic
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+        });
+
+        function updateNav() {
+            document.querySelectorAll('.section-container').forEach((sec, idx) => {
+                if(idx === currentIndex) {
+                    sec.classList.remove('hidden');
+                    sec.classList.add('block');
+                } else {
+                    sec.classList.add('hidden');
+                    sec.classList.remove('block');
+                }
+            });
+
+            document.getElementById('btn-prev').disabled = currentIndex === 0;
+            
+            if(currentIndex === sections.length - 2) { // Act 7
+                document.getElementById('btn-next').classList.add('hidden');
+                document.getElementById('btn-submit').classList.remove('hidden');
+                document.getElementById('btn-results').classList.add('hidden');
+            } else if (currentIndex === sections.length - 1) { // Results
+                document.getElementById('nav-controls').classList.add('hidden');
+            } else {
+                document.getElementById('btn-next').classList.remove('hidden');
+                document.getElementById('btn-submit').classList.add('hidden');
+                document.getElementById('btn-results').classList.remove('hidden');
+            }
+
+            // Progress bar
+            const totalActs = 7;
+            const completedCount = Object.values(actCompleted).filter(Boolean).length;
+            const pct = Math.round((completedCount / totalActs) * 100);
+            document.getElementById('progress-bar').style.width = pct + '%';
+            document.getElementById('progress-text').innerText = pct;
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function nav(dir) {
+            currentIndex += dir;
+            if (currentIndex < 0) currentIndex = 0;
+            if (currentIndex >= sections.length) currentIndex = sections.length - 1;
+            updateNav();
+        }
+
+        function showResultsEarly() {
+            currentIndex = sections.length - 1;
+            generateResults();
+            updateNav();
+        }
+        
+        function submitAll() {
+            showResultsEarly();
+        }
+
+        function lockSection(actId) {
+            actCompleted[actId] = true;
+            const section = document.getElementById(`section-${actId}`);
+            section.querySelectorAll('input, select, textarea').forEach(el => el.disabled = true);
+            section.querySelectorAll('.check-ans-btn').forEach(el => el.disabled = true);
+            section.querySelectorAll('.check-ans-btn').forEach(el => el.classList.add('opacity-50', 'cursor-not-allowed'));
+            updateNav(); // update progress bar
+        }
+
+        function checkAct1() {
+            const val = document.getElementById('act1-answer').value.trim();
+            if(val.length > 10) {
+                scores.act1 = 100;
+                document.getElementById('act1-feedback').innerHTML = "<span class='text-green-600'>Excellent notes! Your summary has been recorded.</span>";
+            } else {
+                scores.act1 = 50;
+                document.getElementById('act1-feedback').innerHTML = "<span class='text-orange-500'>Summary recorded, but try to be more detailed next time.</span>";
+            }
+            lockSection('act1');
+        }
+
+        let puzzleState = [];
+        let timerInterval;
+        let seconds = 0;
+
+        function initPuzzle() {
+            clearInterval(timerInterval);
+            seconds = 0;
+            document.getElementById('puzzle-timer').innerText = "00:00";
+            timerInterval = setInterval(() => {
+                seconds++;
+                let m = Math.floor(seconds / 60).toString().padStart(2, '0');
+                let s = (seconds % 60).toString().padStart(2, '0');
+                document.getElementById('puzzle-timer').innerText = `${m}:${s}`;
+            }, 1000);
+
+            const board = document.getElementById('puzzle-board');
+            board.innerHTML = '';
+            puzzleState = [];
+            
+            // 20 pieces (5 cols x 4 rows)
+            let order = Array.from({length: 20}, (_, i) => i);
+            // Shuffle
+            for (let i = order.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [order[i], order[j]] = [order[j], order[i]];
+            }
+            
+            order.forEach((correctIndex, posIndex) => {
+                let piece = document.createElement('div');
+                piece.classList.add('puzzle-piece');
+                piece.setAttribute('draggable', 'true');
+                piece.dataset.pos = posIndex;
+                piece.dataset.correct = correctIndex;
+                
+                // Calculate background position based on correct index
+                let col = correctIndex % 5;
+                let row = Math.floor(correctIndex / 5);
+                piece.style.backgroundPosition = `${col * 25}% ${row * 33.333}%`; 
+                // Note: bg-size is 500% 400%. So x intervals: 0, 25, 50, 75, 100. y: 0, 33.33, 66.66, 100.
+                
+                // Fallback image handling
+                piece.style.backgroundImage = "url('Image2.jpg'), url('https://placehold.co/500x400/3b82f6/ffffff?text=Puzzle+Piece')";
+
+                setupDragEvents(piece);
+                board.appendChild(piece);
+                puzzleState.push(piece);
+            });
+            document.getElementById('act2-feedback').innerHTML = '';
+        }
+
+        let draggedPiece = null;
+        function setupDragEvents(piece) {
+            piece.addEventListener('dragstart', function() { draggedPiece = this; setTimeout(() => this.style.opacity = '0.5', 0); });
+            piece.addEventListener('dragend', function() { this.style.opacity = '1'; draggedPiece = null; });
+            piece.addEventListener('dragover', function(e) { e.preventDefault(); });
+            piece.addEventListener('dragenter', function(e) { e.preventDefault(); this.style.border = '2px dashed #fff'; });
+            piece.addEventListener('dragleave', function() { this.style.border = '1px solid rgba(255,255,255,0.2)'; });
+            piece.addEventListener('drop', function() {
+                this.style.border = '1px solid rgba(255,255,255,0.2)';
+                if(draggedPiece !== this) {
+                    // Swap data
+                    let tempCorrect = this.dataset.correct;
+                    let tempBgPos = this.style.backgroundPosition;
+                    
+                    this.dataset.correct = draggedPiece.dataset.correct;
+                    this.style.backgroundPosition = draggedPiece.style.backgroundPosition;
+                    
+                    draggedPiece.dataset.correct = tempCorrect;
+                    draggedPiece.style.backgroundPosition = tempBgPos;
+                }
+            });
+        }
+
+        function checkAct2() {
+            clearInterval(timerInterval);
+            let correctCount = 0;
+            const pieces = document.getElementById('puzzle-board').children;
+            for(let i=0; i<pieces.length; i++) {
+                if(parseInt(pieces[i].dataset.correct) === parseInt(pieces[i].dataset.pos)) {
+                    correctCount++;
+                }
+            }
+            scores.act2 = (correctCount / 20) * 100;
+            let fb = document.getElementById('act2-feedback');
+            if(correctCount === 20) {
+                fb.innerHTML = `<span class='text-green-600'>Perfect! Puzzle solved in ${document.getElementById('puzzle-timer').innerText}.</span>`;
+            } else {
+                fb.innerHTML = `<span class='text-orange-500'>You got ${correctCount} out of 20 pieces in the correct position.</span>`;
+            }
+            lockSection('act2');
+            
+            // Lock drag and drop
+            for(let i=0; i<pieces.length; i++) pieces[i].setAttribute('draggable', 'false');
+        }
+
+        const dialoguePairs = [
+            { a: "I've been analyzing 'The Great Gatsby' recently, and the underlying themes are fascinating.", b: "Indeed, the critique of the American Dream is central to the narrative." },
+            { a: "Fitzgerald seems to suggest that the pursuit of wealth ultimately leads to moral decay.", b: "Absolutely. The Valley of Ashes perfectly symbolizes that ethical barrenness." },
+            { a: "What about the motif of the green light? It feels highly significant.", b: "It represents Gatsby’s unattainable desires and the illusion of a pristine future." },
+            { a: "It's interesting how the theme of social stratification dictates the characters' fates.", b: "Yes, the barrier between 'old money' and 'new money' proves insurmountable." },
+            { a: "I noticed that carelessness is a recurring behavioral trait among the elite characters.", b: "Tom and Daisy exemplify that; they smash up things and retreat into their money." },
+            { a: "Do you think the theme of memory plays a role in Gatsby’s tragedy?", b: "Crucially so. His tragic flaw is his steadfast belief that he can repeat the past." },
+            { a: "The juxtaposition of illusion versus reality seems to drive the entire plot.", b: "Gatsby’s meticulously crafted persona is the ultimate manifestation of that conflict." },
+            { a: "Even the minor characters reflect the overarching theme of spiritual emptiness.", b: "Exactly, the partygoers highlight the hollow hedonism of the Jazz Age." },
+            { a: "Ultimately, the novel serves as a universal caution against unchecked idealism.", b: "I agree. It remains a timeless reflection on the perils of romanticizing one's ambitions." }
+        ];
+
+        function initAct3() {
+            const container = document.getElementById('act3-container');
+            
+            // Create options array
+            const bOptions = dialoguePairs.map(p => p.b);
+            // Shuffle B options
+            bOptions.sort(() => Math.random() - 0.5);
+
+            dialoguePairs.forEach((pair, idx) => {
+                let div = document.createElement('div');
+                div.className = "flex flex-col md:flex-row gap-4 items-center bg-white dark:bg-gray-800 p-3 rounded shadow-sm border border-gray-200 dark:border-gray-600";
+                
+                let pA = document.createElement('p');
+                pA.className = "w-full md:w-1/2 font-semibold text-brand-blue";
+                pA.innerText = "Person A: " + pair.a;
+                
+                let sel = document.createElement('select');
+                sel.className = "shiny-blue-border w-full md:w-1/2 p-2 bg-transparent act3-select";
+                sel.dataset.correct = pair.b;
+                sel.dataset.idx = idx;
+                
+                // Add default option
+                let defOpt = document.createElement('option');
+                defOpt.value = "";
+                defOpt.innerText = "-- Select Person B's Response --";
+                sel.appendChild(defOpt);
+
+                bOptions.forEach(opt => {
+                    let o = document.createElement('option');
+                    o.value = opt;
+                    o.innerText = opt;
+                    o.className = "text-gray-900"; // ensure readability in dropdown
+                    sel.appendChild(o);
+                });
+
+                sel.addEventListener('change', updateAct3Dropdowns);
+
+                div.appendChild(pA);
+                div.appendChild(sel);
+                container.appendChild(div);
+            });
+        }
+
+        function updateAct3Dropdowns() {
+            const selects = Array.from(document.querySelectorAll('.act3-select'));
+            const selectedValues = selects.map(s => s.value).filter(v => v !== "");
+
+            selects.forEach(select => {
+                const currentVal = select.value;
+                Array.from(select.options).forEach(option => {
+                    if (option.value === "") return;
+                    // Disable if selected in another dropdown
+                    if (selectedValues.includes(option.value) && option.value !== currentVal) {
+                        option.disabled = true;
+                        option.style.color = '#ccc';
+                    } else {
+                        option.disabled = false;
+                        option.style.color = '';
+                    }
+                });
+            });
+        }
+
+        function checkAct3() {
+            const selects = document.querySelectorAll('.act3-select');
+            let correct = 0;
+            selects.forEach(sel => {
+                if(sel.value === sel.dataset.correct) {
+                    correct++;
+                    sel.classList.add('correct-bg');
+                } else {
+                    sel.classList.add('incorrect-bg');
+                }
+            });
+            scores.act3 = (correct / 9) * 100;
+            document.getElementById('act3-feedback').innerHTML = `You got ${correct} out of 9 correct.`;
+            lockSection('act3');
+        }
+
+        function checkAct4() {
+            const text = document.getElementById('act4-answer').value.trim();
+            const grade = parseInt(document.getElementById('act4-grade').value);
+            
+            if(text.length > 5 && grade >= 1 && grade <= 10) {
+                scores.act4 = grade * 10; // convert 1-10 to 10-100
+                document.getElementById('act4-feedback').innerHTML = "<span class='text-green-600'>Interpretation saved successfully!</span>";
+            } else {
+                scores.act4 = 50; // default
+                document.getElementById('act4-feedback').innerHTML = "<span class='text-orange-500'>Saved, but make sure to fill out both fields appropriately next time.</span>";
+            }
+            lockSection('act4');
+        }
+
+        const act5Questions = [
+            { q: "According to the text, what is the fundamental function of 'theme' in literature?", c: ["It acts as the underlying architectural structure of the narrative.", "It provides a simplistic moral lesson for the reader.", "It summarizes the explicit plot events.", "It determines the physical setting of the story."], a: 0 },
+            { q: "What distinction does the author make between 'subject' and 'theme'?", c: ["The subject is the vehicle, while the theme is the philosophical destination.", "The subject is abstract, whereas the theme is concrete.", "They are synonymous terms used interchangeably by novices.", "The theme is only relevant to character development, not the subject."], a: 0 },
+            { q: "How do masterful authors typically present themes?", c: ["By weaving them into the subtext to demand active reader engagement.", "By explicitly stating them in the opening chapter.", "By assigning a specific character to dictate the theme directly.", "By avoiding ambiguity entirely."], a: 0 },
+            { q: "What is meant by the phrase 'literary themes are inherently polyphonic'?", c: ["A narrative often presents competing thematic propositions.", "Themes only relate to musical motifs within the text.", "Every character must agree on a singular philosophical truth.", "The theme must be universally accepted by all critics."], a: 0 },
+            { q: "What analytical approach is necessary to identify a theme according to the text?", c: ["An inductive approach accumulating textual evidence.", "A deductive approach ignoring character flaws.", "A passive reading strategy focusing only on plot.", "A reliance solely on historical context."], a: 0 },
+            { q: "The enduring power of canonical literature is attributed to:", c: ["Its relentless pursuit of universal thematic truths.", "Its exclusive focus on historical accuracy.", "The simplicity of its grammatical structures.", "Its ability to entertain without philosophical inquiry."], a: 0 }
+        ];
+
+        function initAct5() {
+            const container = document.getElementById('act5-mcqs');
+            act5Questions.forEach((item, qIdx) => {
+                let div = document.createElement('div');
+                div.className = "mb-4";
+                let qText = document.createElement('p');
+                qText.className = "font-bold mb-2";
+                qText.innerText = `${qIdx + 1}. ${item.q}`;
+                div.appendChild(qText);
+
+                // Create choices, keep track of correct answer string
+                let correctStr = item.c[item.a];
+                let choices = [...item.c];
+                // Shuffle
+                choices.sort(() => Math.random() - 0.5);
+
+                choices.forEach(choice => {
+                    let lbl = document.createElement('label');
+                    lbl.className = "flex items-center space-x-3 mb-2 cursor-pointer p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition";
+                    
+                    let radio = document.createElement('input');
+                    radio.type = "radio";
+                    radio.name = `act5-q${qIdx}`;
+                    radio.value = (choice === correctStr) ? "1" : "0";
+                    radio.className = "form-radio text-brand-blue focus:ring-brand-blue";
+                    
+                    let span = document.createElement('span');
+                    span.innerText = choice;
+                    
+                    lbl.appendChild(radio);
+                    lbl.appendChild(span);
+                    div.appendChild(lbl);
+                });
+                container.appendChild(div);
+            });
+        }
+
+        function checkAct5() {
+            let correct = 0;
+            act5Questions.forEach((_, qIdx) => {
+                const selected = document.querySelector(`input[name="act5-q${qIdx}"]:checked`);
+                const allRadios = document.querySelectorAll(`input[name="act5-q${qIdx}"]`);
+                
+                // Highlight correct/incorrect
+                allRadios.forEach(radio => {
+                    if(radio.value === "1") radio.parentElement.classList.add('text-green-600', 'font-bold');
+                });
+                
+                if(selected) {
+                    if(selected.value === "1") {
+                        correct++;
+                    } else {
+                        selected.parentElement.classList.add('text-red-500', 'line-through');
+                    }
+                }
+            });
+            scores.act5 = (correct / 6) * 100;
+            document.getElementById('act5-feedback').innerHTML = `You scored ${correct} out of 6.`;
+            lockSection('act5');
+        }
+
+        const act6Sentences = [
+            "Although the protagonist sought redemption, his tragic flaw ultimately precipitated his downfall.",
+            "The overarching theme of alienation becomes evident when society actively isolates the individual.",
+            "By juxtaposing light and dark imagery, the author elegantly highlights moral ambiguity.",
+            "The narrative unequivocally demonstrates that absolute power inevitably corrupts systemic structures.",
+            "Through recurrent motifs of decay, the novel underscores the transient nature of existence.",
+            "Despite her meticulous planning, fate intervened relentlessly to unravel her grand ambitions.",
+            "The story essentially argues that genuine sacrifice requires relinquishing one's most cherished desires.",
+            "Because the setting operates as an antagonist, survival dictates profound psychological resilience.",
+            "The resolution deliberately remains ambiguous, prompting readers to interrogate their own biases.",
+            "Subtle character interactions continuously reinforce the overarching critique of rigid social hierarchies.",
+            "Whereas early chapters emphasize youthful innocence, subsequent events starkly portray cynical disillusionment.",
+            "Ultimately, the thematic resonance relies entirely upon our willingness to confront uncomfortable truths."
+        ];
+
+        let act6State = [];
+
+        function initAct6() {
+            const container = document.getElementById('act6-container');
+            act6Sentences.forEach((sentence, idx) => {
+                // Remove punctuation for scrambling, keep lowercase except first
+                let rawWords = sentence.replace(/[.,]/g, '').split(' ');
+                let words = [...rawWords].sort(() => Math.random() - 0.5); // Shuffle
+                
+                act6State.push({ correct: sentence, current: [] });
+
+                let block = document.createElement('div');
+                block.className = "bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-sm";
+                
+                // Header with speaker
+                let header = document.createElement('div');
+                header.className = "flex justify-between items-center mb-3 border-b border-gray-200 dark:border-gray-600 pb-2";
+                let title = document.createElement('span');
+                title.className = "font-bold text-gray-700 dark:text-gray-200";
+                title.innerText = `Sentence ${idx + 1}`;
+                
+                let speaker = document.createElement('button');
+                speaker.className = "p-2 bg-blue-100 dark:bg-blue-900 rounded-full text-brand-blue dark:text-blue-200 hover:bg-blue-200 transition";
+                speaker.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clip-rule="evenodd"></path></svg>`;
+                speaker.onclick = () => {
+                    let utterance = new SpeechSynthesisUtterance(sentence);
+                    utterance.rate = 0.9;
+                    window.speechSynthesis.speak(utterance);
+                };
+                
+                header.appendChild(title);
+                header.appendChild(speaker);
+                block.appendChild(header);
+
+                // Builder areas
+                let targetArea = document.createElement('div');
+                targetArea.id = `act6-target-${idx}`;
+                targetArea.className = "min-h-[50px] p-2 bg-white dark:bg-gray-800 rounded border-2 border-dashed border-gray-300 dark:border-gray-600 mb-3 flex flex-wrap gap-2";
+                
+                let sourceArea = document.createElement('div');
+                sourceArea.id = `act6-source-${idx}`;
+                sourceArea.className = "flex flex-wrap gap-2";
+
+                words.forEach(w => {
+                    let pill = document.createElement('span');
+                    pill.className = "bg-gray-200 dark:bg-gray-600 px-3 py-1 rounded cursor-pointer hover:bg-brand-blue hover:text-white transition shadow-sm select-none";
+                    pill.innerText = w;
+                    
+                    // Click to swap areas
+                    pill.onclick = function() {
+                        if(actCompleted.act6) return; // Locked
+                        if(this.parentElement.id === sourceArea.id) {
+                            targetArea.appendChild(this);
+                        } else {
+                            sourceArea.appendChild(this);
+                        }
+                    };
+                    sourceArea.appendChild(pill);
+                });
+
+                block.appendChild(targetArea);
+                block.appendChild(sourceArea);
+                container.appendChild(block);
+            });
+        }
+
+        function checkAct6() {
+            let correct = 0;
+            act6Sentences.forEach((sentence, idx) => {
+                let targetArea = document.getElementById(`act6-target-${idx}`);
+                let userSentence = Array.from(targetArea.children).map(span => span.innerText).join(' ');
+                let cleanCorrect = sentence.replace(/[.,]/g, '').toLowerCase();
+                let cleanUser = userSentence.toLowerCase();
+                
+                if(cleanUser === cleanCorrect) {
+                    correct++;
+                    targetArea.classList.add('correct-bg');
+                } else {
+                    targetArea.classList.add('incorrect-bg');
+                    // Show correct answer below
+                    let p = document.createElement('p');
+                    p.className = "text-sm text-green-600 mt-1 font-semibold";
+                    p.innerText = "Correct: " + sentence;
+                    targetArea.parentElement.appendChild(p);
+                }
+            });
+            scores.act6 = (correct / 12) * 100;
+            document.getElementById('act6-feedback').innerHTML = `You constructed ${correct} out of 12 sentences correctly.`;
+            lockSection('act6');
+        }
+
+        const act7FullText = "When the research plane struck the frozen lake, Mara remembered only the violent tilt of the cabin and the silence that followed. She crawled through a split in the metal and found herself beneath a sky as white as unfinished paper. The pilot was unconscious but breathing. Their radio was broken, their food scattered, and the nearest settlement lay beyond a forest no map described clearly. At first, Mara treated survival as a sequence of practical problems. She dragged the pilot into the shelter of the overturned wing, wrapped him in emergency blankets, and collected branches before darkness hardened the snow. Yet every task exposed another danger. The matches were damp. Wolves had crossed the shore. Worse still, the aircraft’s emergency beacon blinked weakly, as if sending its final breath into the storm. By morning, the pilot woke and told her the beacon’s battery might last one hour. “Use it now,” he urged. Mara disagreed. Thick clouds would prevent search aircraft from approaching, and the signal might vanish before anyone could act. Waiting, however, meant trusting her judgment over that of an experienced adult. Fear whispered that obedience would protect her from blame. She climbed a ridge to study the horizon. There, sunlight pierced the western clouds, revealing a narrow corridor of blue. Mara understood that courage was not the absence of uncertainty; it was the decision to accept responsibility despite it. She returned, disconnected the beacon, and waited. The hour stretched painfully. The pilot’s condition worsened, and snow began filling their footprints. Mara nearly reconnected the device, but she noticed the wind changing. The clouds separated. She carried the beacon onto the lake, built a platform from luggage, and switched it on. Its green light pulsed steadily. Forty minutes later, a distant engine disturbed the frozen silence. A rescue helicopter appeared above the ridge. As it descended, Mara did not feel triumphant. She felt accountable—not only for the choice that had saved them, but also for the risks it had created. Months afterward, people praised her bravery. Mara always corrected them. Survival, she explained, had depended on fire, shelter, timing, and luck. But beneath those necessities lay a harder lesson: maturity begins when a person stops searching for certainty and chooses to act for others, knowing that even a wise decision can fail.";
+        let act7MissingWords = []; // store correct answers
+
+        const act7Qs = [
+            { q: "1. Which statement best expresses the story’s central theme?", c: ["Experience always matters more than instinct.", "Courage requires acting responsibly despite uncertainty.", "Technology is the only reliable means of survival.", "People should avoid risks whenever possible."], a: 1 },
+            { q: "2. Why does Mara delay activating the beacon?", c: ["She wants to prove the pilot is mistaken.", "She believes the wolves will follow its signal.", "She hopes to save its limited battery for clearer weather.", "She is unable to carry it onto the lake."], a: 2 },
+            { q: "3. What does the phrase “Fear whispered that obedience would protect her from blame” suggest?", c: ["Mara is tempted to surrender responsibility for the decision.", "Mara suspects that the pilot intends to blame her.", "Mara hears a voice outside the aircraft.", "Mara believes obedience will guarantee rescue."], a: 0 },
+            { q: "4. How does the changing weather affect the plot?", c: ["It forces Mara and the pilot to enter the forest.", "It destroys the shelter beneath the wing.", "It makes the wolves leave the shoreline.", "It confirms that Mara’s decision to wait may succeed."], a: 3 },
+            { q: "5. Why does Mara not feel triumphant when the helicopter arrives?", c: ["She is disappointed that the pilot survived.", "She recognizes both the success and the danger of her choice.", "She believes the rescuers arrived by accident.", "She regrets disconnecting the beacon."], a: 1 },
+            { q: "6. Which detail most clearly illustrates Mara’s resourcefulness?", c: ["She remembers the impact of the plane.", "She watches the green light pulse.", "She builds a beacon platform from luggage.", "She listens to the pilot’s advice."], a: 2 }
+        ];
+
+        function initAct7() {
+            // Process Text
+            let wordsArray = act7FullText.match(/[\w’\-]+|[^\w\s]+/g); // Split by words and punctuation
+            let htmlStr = "";
+            let wordCount = 0;
+            let inputIdx = 0;
+
+            wordsArray.forEach(token => {
+                if (/\w/.test(token)) {
+                    wordCount++;
+                    if (wordCount % 20 === 0) {
+                        act7MissingWords.push(token);
+                        htmlStr += ` <input type="text" id="act7-blank-${inputIdx}" class="shiny-blue-border w-24 p-1 text-center bg-white dark:bg-gray-800 text-brand-blue font-bold mx-1" placeholder="..."> `;
+                        inputIdx++;
+                    } else {
+                        htmlStr += (wordCount === 1 ? "" : " ") + token;
+                    }
+                } else {
+                    htmlStr += token; // Attach punctuation without space
+                }
+            });
+            document.getElementById('act7-text').innerHTML = htmlStr;
+
+            // Process MCQs
+            const container = document.getElementById('act7-mcqs');
+            act7Qs.forEach((item, qIdx) => {
+                let div = document.createElement('div');
+                div.className = "mb-4 bg-white dark:bg-gray-800 p-4 rounded shadow-sm border border-gray-200 dark:border-gray-600";
+                let qText = document.createElement('p');
+                qText.className = "font-bold mb-3";
+                qText.innerText = item.q;
+                div.appendChild(qText);
+
+                item.c.forEach((choice, cIdx) => {
+                    let lbl = document.createElement('label');
+                    lbl.className = "flex items-start space-x-3 mb-2 cursor-pointer";
+                    
+                    let radio = document.createElement('input');
+                    radio.type = "radio";
+                    radio.name = `act7-q${qIdx}`;
+                    radio.value = cIdx.toString();
+                    radio.className = "form-radio mt-1 text-brand-blue focus:ring-brand-blue";
+                    
+                    let span = document.createElement('span');
+                    span.innerText = choice;
+                    
+                    lbl.appendChild(radio);
+                    lbl.appendChild(span);
+                    div.appendChild(lbl);
+                });
+                container.appendChild(div);
+            });
+        }
+
+        function checkAct7() {
+            // Check Blanks
+            let blanksCorrect = 0;
+            act7MissingWords.forEach((correctWord, idx) => {
+                let input = document.getElementById(`act7-blank-${idx}`);
+                let cleanUser = input.value.trim().toLowerCase().replace(/[^\w]/g, '');
+                let cleanCorrect = correctWord.toLowerCase().replace(/[^\w]/g, '');
+                if(cleanUser === cleanCorrect) {
+                    blanksCorrect++;
+                    input.classList.add('correct-bg');
+                } else {
+                    input.classList.add('incorrect-bg');
+                    input.value = correctWord; // Show correct word
+                    input.style.color = '#ef4444';
+                }
+            });
+
+            // Check MCQs
+            let mcqsCorrect = 0;
+            act7Qs.forEach((item, qIdx) => {
+                const selected = document.querySelector(`input[name="act7-q${qIdx}"]:checked`);
+                const allRadios = document.querySelectorAll(`input[name="act7-q${qIdx}"]`);
+                
+                allRadios.forEach(radio => {
+                    if(parseInt(radio.value) === item.a) radio.parentElement.classList.add('text-green-600', 'font-bold');
+                });
+
+                if(selected) {
+                    if(parseInt(selected.value) === item.a) {
+                        mcqsCorrect++;
+                    } else {
+                        selected.parentElement.classList.add('text-red-500', 'line-through');
+                    }
+                }
+            });
+
+            const totalPoints = act7MissingWords.length + act7Qs.length;
+            const pointsScored = blanksCorrect + mcqsCorrect;
+            scores.act7 = (pointsScored / totalPoints) * 100;
+
+            document.getElementById('act7-feedback').innerHTML = `You got ${blanksCorrect}/${act7MissingWords.length} words and ${mcqsCorrect}/${act7Qs.length} questions right.`;
+            lockSection('act7');
+        }
+
+        let barChartInstance = null;
+        let radarChartInstance = null;
+
+        function generateResults() {
+            // Unsaved inputs will just get 0, but if user clicked 'See Results' early, it's fine.
+            const name = document.getElementById('student-name').value || 'Student';
+            const date = document.getElementById('student-date').value || new Date().toLocaleDateString();
+            
+            // Generate Data
+            const labels = ['Video (A1)', 'Puzzle (A2)', 'Dialogue (A3)', 'Story (A4)', 'Reading (A5)', 'Sentences (A6)', 'The Last Signal (A7)'];
+            const dataPts = [scores.act1, scores.act2, scores.act3, scores.act4, scores.act5, scores.act6, scores.act7];
+            
+            let totalScore = dataPts.reduce((a,b)=>a+b, 0) / 7;
+            document.getElementById('final-score-display').innerText = totalScore.toFixed(1);
+
+            let feedbackGen = document.getElementById('final-feedback-general');
+            if(totalScore >= 90) feedbackGen.innerText = `Outstanding work, ${name}! You have a profound mastery of identifying and analyzing thematic structures in literature.`;
+            else if(totalScore >= 70) feedbackGen.innerText = `Great job, ${name}. You show solid understanding, though a few concepts could use review.`;
+            else feedbackGen.innerText = `Keep practicing, ${name}. Theme can be abstract and challenging, but reviewing these activities will build your analytical skills.`;
+
+            // Render Recommendations
+            const recList = document.getElementById('recommendations-list');
+            recList.innerHTML = '';
+            
+            let recommendations = [];
+            // Conditional logic for specific recommendations
+            if(scores.act1 < 80) recommendations.push("Review video material twice, taking structured Cornell notes to capture overarching messages.");
+            else recommendations.push("Excellent note-taking. Continue using summarization to process multimedia narratives.");
+            
+            if(scores.act2 < 100) recommendations.push("When engaging with visual narratives, look for visual motifs before trying to see the big picture.");
+            else recommendations.push("Your spatial reasoning regarding visual themes is sharp.");
+            
+            if(scores.act3 < 80) recommendations.push("Review character dialogue in novels. Look for subtext, as characters rarely state themes directly.");
+            else recommendations.push("You accurately connect character dialogue to overarching societal critiques.");
+            
+            if(scores.act5 < 80) recommendations.push("Practice inductive reasoning in reading: collect specific details to form a general thematic rule.");
+            else recommendations.push("Your reading comprehension of abstract literary theory is at an advanced (C1) level.");
+            
+            if(scores.act6 < 80) recommendations.push("Focus on advanced syntactic structures (complex-compound sentences) to better articulate thematic analyses.");
+            else recommendations.push("Your syntactic command allows you to express nuanced literary arguments flawlessly.");
+            
+            if(scores.act7 < 80) recommendations.push("For cloze tests, use surrounding context clues (collocations, prepositions) to deduce missing vocabulary.");
+            else recommendations.push("High context-clue proficiency. You grasped the nuances of 'The Last Signal' perfectly.");
+
+            recommendations.push("Consider reading outside your comfort genre to see how themes like 'courage' manifest differently.");
+            recommendations.push("Always attempt to formulate a theme as a complete sentence about human nature, rather than a single word (e.g., 'Love').");
+
+            recommendations.slice(0, 8).forEach(rec => {
+                let li = document.createElement('li');
+                li.innerText = rec;
+                recList.appendChild(li);
+            });
+
+            // Initialize/Update Charts
+            const ctxBar = document.getElementById('barChart').getContext('2d');
+            if(barChartInstance) barChartInstance.destroy();
+            barChartInstance = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Score (%)',
+                        data: dataPts,
+                        backgroundColor: ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6', '#8b5cf6'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: { y: { beginAtZero: true, max: 100 } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            const ctxRadar = document.getElementById('radarChart').getContext('2d');
+            if(radarChartInstance) radarChartInstance.destroy();
+            radarChartInstance = new Chart(ctxRadar, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Competency Map',
+                        data: dataPts,
+                        backgroundColor: 'rgba(59, 130, 246, 0.4)',
+                        borderColor: '#3b82f6',
+                        pointBackgroundColor: '#1e293b',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    scales: { r: { beginAtZero: true, max: 100 } }
+                }
+            });
+        }
+
+        window.onload = () => {
+            initPuzzle();
+            initAct3();
+            initAct5();
+            initAct6();
+            initAct7();
+            updateNav();
+        };
+
+    </script>
+</body>
+</html>
